@@ -11,14 +11,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.lightBlueAccent,
-        body: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15.0),
-            child: MyHomePage(title: "Which One is More Expensive"),
-          ),
-        ),
+        backgroundColor: Colors.black,
+        body: MyHomePage(title: "Which One is More Expensive"),
       ),
     );
   }
@@ -37,42 +33,41 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Padding(
-          padding: EdgeInsets.all(10),
-          child: Text(
-            "which one is more expensive?",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.all(0),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
+        InkWell(
+          child: Stack(
             children: [
-              IconButton(
-                icon: Image.network(
-                  'https://picsum.photos/250?image=9',
-                ),
-                iconSize: 150,
-                onPressed: () {},
+              const Text(
+                'Hello',
+                style: TextStyle(),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(
-                width: 10,
-              ),
-              IconButton(
-                icon: Image.network(
-                  'https://picsum.photos/250?image=9',
+              Container(
+                height: MediaQuery.of(context).size.height / 2,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    opacity: 0.4,
+                    fit: BoxFit.cover,
+                    image: NetworkImage(
+                        "https://s3.amazonaws.com/nikeinc/assets/95620/NikeNews_FeaturedFootwear_NikeSB_DunkLowPro_BenJerrys_3_hd_1600.jpg"),
+                  ),
                 ),
-                iconSize: 150,
-                onPressed: () {},
               ),
             ],
+          ),
+          onTap: () {
+            print("Tapped on container");
+          },
+        ),
+        Container(
+          height: MediaQuery.of(context).size.height / 2,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              opacity: 0.4,
+              fit: BoxFit.cover,
+              image: NetworkImage(
+                  "https://tesla-cdn.thron.com/delivery/public/image/tesla/56cb8c41-e898-44ce-b6b7-fe9b9a05f529/bvlatuR/std/1200x628/MS-Social"),
+            ),
           ),
         ),
       ],
