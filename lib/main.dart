@@ -39,6 +39,8 @@ class _MyHomePageState extends State<MyHomePage> {
   int score = 0;
   int totalScore = brain.getItemBankTotal();
   int highscore = 0;
+  double opacityAnimationPrice = 0.0;
+  double opacityAnimationIcon = 0.0;
 
   // gets highscore stored on device
   Future<int> _getHighScore() async {
@@ -70,10 +72,27 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  var alertStyle = AlertStyle(
+    animationType: AnimationType.grow,
+    isCloseButton: false,
+    isOverlayTapDismiss: false,
+    descTextAlign: TextAlign.start,
+    animationDuration: Duration(milliseconds: 500),
+    alertBorder: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(30.0),
+    ),
+    titleStyle: TextStyle(
+      fontWeight: FontWeight.bold,
+      color: Colors.red,
+    ),
+    alertAlignment: Alignment.center,
+  );
+
   // displays win alert (when user finishes all questions)
   void winAlert() {
     Alert(
       context: context,
+      style: alertStyle,
       title: "YOU WON",
       desc: "You beat the game with a score of: $score/$score, congrats!",
       buttons: [
@@ -98,8 +117,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void loseAlert() {
     Alert(
       context: context,
-      title: "SCORE",
-      desc: "You busted! Score : $score",
+      style: alertStyle,
+      title: "YOU BUSTED",
+      desc: "Score : $score",
       buttons: [
         DialogButton(
             child: const Text(
@@ -117,34 +137,67 @@ class _MyHomePageState extends State<MyHomePage> {
     ).show();
   }
 
+  void finishGame() {
+    if (brain.isFinished() == true) {
+      // Display winner alert
+      winAlert();
+      score = 0;
+
+      // resets after the alert
+      brain.reset();
+    }
+  }
+
+  void continueGame() {
+    opacityAnimationPrice = 1.0;
+    Future.delayed(const Duration(seconds: 2), () {
+      opacityAnimationIcon = 1.0;
+    });
+    score++;
+
+    Future.delayed(const Duration(seconds: 4), () {
+      opacityAnimationPrice = 0.0;
+      opacityAnimationIcon = 0.0;
+
+      Future.delayed(const Duration(seconds: 1), () {
+        brain.nextItem();
+      });
+    });
+  }
+
+  void loseGame() {
+    opacityAnimationPrice = 1.0;
+
+    Future.delayed(const Duration(seconds: 2), () {
+      loseAlert();
+      opacityAnimationPrice = 0.0;
+      Future.delayed(const Duration(seconds: 2), () {
+        brain.reset();
+        score = 0;
+      });
+    });
+    _updateHighScore(score);
+  }
+
   // determines game condition when user clicks top choice
   void topChoice() {
     if (brain.getItemPrice() >= brain.getNextItemPrice()) {
       setState(() {
         if (brain.isFinished() == true) {
-          // Display winner alert
-          winAlert();
-          score = 0;
-
-          // resets after the alert
-          brain.reset();
+          finishGame();
         }
 
         // continue if not finished
         else {
           if (brain.getItemPrice() >= brain.getNextItemPrice()) {
-            score++;
+            continueGame();
           }
-          brain.nextItem();
         }
       });
     }
     // lose
     else {
-      _updateHighScore(score);
-      loseAlert();
-      brain.reset();
-      score = 0;
+      loseGame();
     }
   }
 
@@ -153,28 +206,20 @@ class _MyHomePageState extends State<MyHomePage> {
     if (brain.getItemPrice() <= brain.getNextItemPrice()) {
       setState(() {
         if (brain.isFinished() == true) {
-          // Display winner alert
-          winAlert();
-          score = 0;
-
-          // resets after the alert
-          brain.reset();
+          finishGame();
         }
 
         // continue if not finished
         else {
           if (brain.getItemPrice() <= brain.getNextItemPrice()) {
-            score++;
+            continueGame();
           }
-          brain.nextItem();
         }
       });
     }
     // lose
     else {
-      loseAlert();
-      brain.reset();
-      score = 0;
+      loseGame();
     }
   }
 
@@ -194,7 +239,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     height: MediaQuery.of(context).size.height / 2,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        opacity: 0.5,
+                        opacity: 0.4,
                         fit: BoxFit.cover,
                         image: NetworkImage(brain.getItemPicture()),
                       ),
@@ -202,19 +247,42 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   SizedBox(
                     height: MediaQuery.of(context).size.height / 2,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: Text(
-                          brain.getItemName(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 25,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+                          child: Center(
+                            child: Text(
+                              brain.getItemName(),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 25,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+                          child: Center(
+                            child: AnimatedOpacity(
+                              opacity: opacityAnimationPrice,
+                              duration: const Duration(milliseconds: 500),
+                              child: Text(
+                                brain.getItemPrice().toString(),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 30,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -233,7 +301,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     height: MediaQuery.of(context).size.height / 2,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        opacity: 0.5,
+                        opacity: 0.4,
                         fit: BoxFit.cover,
                         image: NetworkImage(brain.getNextItemPicture()),
                       ),
@@ -241,19 +309,42 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   SizedBox(
                     height: MediaQuery.of(context).size.height / 2,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: Text(
-                          brain.getNextItemName(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 25,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+                          child: Center(
+                            child: Text(
+                              brain.getNextItemName(),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 25,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+                          child: Center(
+                            child: AnimatedOpacity(
+                              opacity: opacityAnimationPrice,
+                              duration: const Duration(milliseconds: 500),
+                              child: Text(
+                                brain.getNextItemPrice().toString(),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 30,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -267,6 +358,15 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
+        AnimatedOpacity(
+            opacity: opacityAnimationIcon,
+            duration: const Duration(milliseconds: 500),
+            child: Center(
+                child: Icon(
+              Icons.check_circle,
+              size: 60,
+              color: Colors.green,
+            ))),
         // score
         SafeArea(
           child: Padding(
@@ -283,7 +383,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ),
-        // higscore
+        // highscore
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
